@@ -1,24 +1,49 @@
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
+import NewTaskForm from "../components/NewTaskForm";
+import { CATEGORIES } from "../data";
 import App from "../components/App";
-import Task from "../components/Task";
 
-test("displays the task text", () => {
-  render(<Task text={"text!"} category={"category!"} />);
-  expect(screen.queryByText("text!")).toBeInTheDocument();
+test("calls the onTaskFormSubmit callback prop when the form is submitted", () => {
+  const onTaskFormSubmit = jest.fn();
+  render(
+    <NewTaskForm categories={CATEGORIES} onTaskFormSubmit={onTaskFormSubmit} />
+  );
+
+  fireEvent.change(screen.queryByLabelText(/Details/), {
+    target: { value: "Pass the tests" },
+  });
+
+  fireEvent.change(screen.queryByLabelText(/Category/), {
+    target: { value: "Code" },
+  });
+
+  fireEvent.submit(screen.queryByText(/Add task/));
+
+  expect(onTaskFormSubmit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      text: "Pass the tests",
+      category: "Code",
+    })
+  );
 });
 
-test("displays the task category", () => {
-  render(<Task text={"text!"} category={"category!"} />);
-  expect(screen.queryByText("category!")).toBeInTheDocument();
-});
-
-test("is removed from the list when the delete button is clicked", () => {
+test("adds a new item to the list when the form is submitted", () => {
   render(<App />);
-  const task = screen.queryByText(/Buy rice/);
-  const deleteButton = task.parentElement.querySelector("button");
 
-  fireEvent.click(deleteButton);
+  const codeCount = screen.queryAllByText(/Code/).length;
 
-  expect(screen.queryByText(/Buy rice/)).not.toBeInTheDocument();
+  fireEvent.change(screen.queryByLabelText(/Details/), {
+    target: { value: "Pass the tests" },
+  });
+
+  fireEvent.change(screen.queryByLabelText(/Category/), {
+    target: { value: "Code" },
+  });
+
+  fireEvent.submit(screen.queryByText(/Add task/));
+
+  expect(screen.queryByText(/Pass the tests/)).toBeInTheDocument();
+
+  expect(screen.queryAllByText(/Code/).length).toBe(codeCount + 1);
 });
